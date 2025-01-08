@@ -1,6 +1,8 @@
-from django.conf import settings
-from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import path, include
+from users.views import home  # Import the home view from the users app
 
 urlpatterns = [
-    # other URLs
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('admin/', admin.site.urls),
+    path('', home, name='home'),  # Root URL points to the home view
+]
