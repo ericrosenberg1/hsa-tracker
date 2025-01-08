@@ -4,5 +4,5 @@ from users.views import home  # Import the home view from the users app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),  # Root URL points to the home view
+    path('', include('users.urls', namespace='users')),
 ]
