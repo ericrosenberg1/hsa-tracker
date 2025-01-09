@@ -1,87 +1,57 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email is required')
+        email = self.normalize_email(email)
+        user = self.model(email=email, username=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
-    """
-    Custom User model with additional fields for family members.
-    """
-    is_family_member = models.BooleanField(
-        default=False,
-        help_text="Indicates if the user is a family member."
-    )
-    family_name = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True,
-        help_text="Name of the family member (if applicable)."
-    )
-    relationship = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True,
-        help_text="Relationship to the primary user (e.g., spouse, child)."
-    )
-    bio = models.TextField(
-        blank=True,
-        null=True,
-        help_text="A short bio for the user."
-    )
+    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=150, unique=True)
 
-    def __str__(self):
-        return self.family_name if self.is_family_member else self.username
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    def save(self, *args, **kwargs):
+        self.username = self.email
+        super().save(*args, **kwargs)
 
 
-class HSAExpense(models.Model):
+class FamilyMember(models.Model):
     """
-    Model to store HSA expenses.
+    Represents a family member for the CustomUser model.
     """
-    CATEGORY_CHOICES = [
-        ('Pharmacy', 'Pharmacy'),
-        ('Medical', 'Medical'),
-        ('Dental', 'Dental'),
-        ('Vision', 'Vision'),
-        ('Lab Testing', 'Lab Testing'),
-        ('Other', 'Other'),
+    RELATIONSHIP_CHOICES = [
+        ('spouse', 'Spouse'),
+        ('child', 'Child'),
+        ('parent', 'Parent'),
+        ('other', 'Other'),
     ]
 
-    payee = models.CharField(
-        max_length=100,
-        help_text="The name of the payee."
-    )
-    expense_date = models.DateField(
-        help_text="The date the expense was incurred."
-    )
-    total = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        help_text="Total amount of the expense."
-    )
-    category = models.CharField(
-        max_length=50,
-        choices=CATEGORY_CHOICES,
-        help_text="Category of the expense."
-    )
-    family_member = models.ForeignKey(
+    user = models.ForeignKey(
         CustomUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="family_expenses",
-        help_text="The family member associated with this expense."
+        on_delete=models.CASCADE,
+        related_name='user_family_members',
+        help_text="The user to whom this family member belongs."
     )
-    notes = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Additional notes or details about the expense."
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        help_text="Timestamp when the expense was created."
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        help_text="Timestamp when the expense was last updated."
-    )
+    name = models.CharField(max_length=100)
+    relationship = models.CharField(max_length=50, choices=RELATIONSHIP_CHOICES)
+    date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.payee} - ${self.total:.2f} ({self.category})"
+        return f"{self.name} ({self.relationship})"

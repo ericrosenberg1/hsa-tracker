@@ -1,24 +1,30 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, HSAExpense
+from .models import CustomUser, FamilyMember
 
 class CustomUserAdmin(UserAdmin):
    model = CustomUser
-   list_display = ('username', 'email', 'is_staff', 'is_family_member', 'family_name')
-   list_filter = ('is_staff', 'is_family_member')
-   fieldsets = UserAdmin.fieldsets + (
-       ('Family Information', {'fields': ('is_family_member', 'family_name', 'relationship', 'bio')}),
+   list_display = ('email', 'is_staff', 'is_active')
+   list_filter = ('is_staff', 'is_active')
+   ordering = ('email',)
+   search_fields = ('email',)
+
+   fieldsets = (
+       (None, {'fields': ('email', 'password')}),
+       ('Permissions', {'fields': ('is_staff', 'is_active', 'groups', 'user_permissions')}),
    )
-   add_fieldsets = UserAdmin.add_fieldsets + (
-       ('Family Information', {'fields': ('is_family_member', 'family_name', 'relationship', 'bio')}),
+   add_fieldsets = (
+       (None, {
+           'classes': ('wide',),
+           'fields': ('email', 'password1', 'password2', 'is_staff', 'is_active')
+       }),
    )
 
-class HSAExpenseAdmin(admin.ModelAdmin):
-   list_display = ('payee', 'expense_date', 'total', 'category', 'family_member')
-   list_filter = ('category', 'expense_date', 'family_member')
-   search_fields = ('payee', 'notes')
-   date_hierarchy = 'expense_date'
-   ordering = ('-expense_date',)
+class FamilyMemberAdmin(admin.ModelAdmin):
+   list_display = ('name', 'relationship', 'user', 'date_added')
+   list_filter = ('relationship',)
+   search_fields = ('name', 'relationship')
+   ordering = ('name',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
-admin.site.register(HSAExpense, HSAExpenseAdmin)
+admin.site.register(FamilyMember, FamilyMemberAdmin)

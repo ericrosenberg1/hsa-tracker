@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Confirm Deletion
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Confirm Deletion</h1>
+    <p>Are you sure you want to delete the following expense?</p>
+    <ul>
+        <li><strong>Description:</strong> {{ expense.description }}</li>
+        <li><strong>Amount:</strong> ${{ expense.amount }}</li>
+        <li><strong>Date:</strong> {{ expense.expense_date }}</li>
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to HSA Tracker{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <h1>Welcome to HSA Tracker</h1>
+    <p>Track and manage your health savings account with ease.</p>
+    <div class="home-actions">
+        <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+        <a href="{% url 'signup' %}" class="btn btn-secondary">Sign Up</a>
+    </div>
+</div>
+{% endblock %}

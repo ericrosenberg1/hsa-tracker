@@ -21,6 +21,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key')  # Ensure this is set in your .env file
 DEBUG = env.bool('DEBUG', default=True)  # Use DEBUG=False in production
 
+# Allowed Hosts
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # Application definition
@@ -31,7 +32,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users',  # Custom app for user management
+    'users',
+    'expenses',
 ]
 
 MIDDLEWARE = [
@@ -79,9 +81,14 @@ DATABASES = {
 # Custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
 
+# Redirect after successful login
 LOGIN_REDIRECT_URL = 'dashboard'
+
+# URL to redirect unauthenticated users for login
 LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = 'home'
+
+# Redirect after logout
+LOGOUT_REDIRECT_URL = 'dashboard'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
