@@ -1,43 +1,32 @@
 services:
+  web:
+    build: .
+    command: gunicorn hsatracker.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
-    ports:
-      - "5432:5432"  # Exposes PostgreSQL on localhost:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data/  # Persists database data
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: hsatracker_user
+      POSTGRES_PASSWORD: vZ%Nvd%d#GJeXnBK@7NS0%CN7hQ79b9^vdVF
+      POSTGRES_DB: hsatracker
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U hsatracker_user -d hsatracker"]
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped  # Automatically restarts the container unless it is explicitly stopped
-    networks:
-      - hsatracker-network
-
-  web:
-    build:
-      context: .  # Specifies the build context (current directory)
-      dockerfile: Dockerfile  # Specifies the Dockerfile
-    volumes:
-      - .:/app  # Mounts the current directory to /app inside the container (useful for development)
-    ports:
-      - "8000:8000"  # Exposes Django on localhost:8000
-    env_file:
-      - .env  # Loads environment variables from the .env file
-    depends_on:
-      db:
-        condition: service_healthy  # Ensures the 'db' service is healthy before starting 'web'
-    restart: unless-stopped  # Automatically restarts the container unless it is explicitly stopped
-    networks:
-      - hsatracker-network
 
 volumes:
   postgres_data:
-
-networks:
-  hsatracker-network:
-    driver: bridge

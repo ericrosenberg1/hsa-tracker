@@ -72,13 +72,19 @@ WSGI_APPLICATION = 'hsatracker.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DATABASE_NAME', default='hsatracker'),
-        'USER': env('DATABASE_USER', default='hsatracker_user'),
-        'PASSWORD': env('DATABASE_PASSWORD'),
-        'HOST': env('DATABASE_HOST', default='db'),
+        'NAME': env('DATABASE_NAME', default='hsatracker'),  # Ensure this matches POSTGRES_DB
+        'USER': env('DATABASE_USER', default='hsatracker_user'),  # Ensure this matches POSTGRES_USER
+        'PASSWORD': env('DATABASE_PASSWORD'),  # No default for security
+        'HOST': env('DATABASE_HOST', default='db'),  # Docker service name
         'PORT': env('DATABASE_PORT', default='5432'),
     }
 }
+
+# Ensure all necessary database environment variables are set
+REQUIRED_DB_ENV_VARS = ['DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_HOST', 'DATABASE_PORT']
+for var in REQUIRED_DB_ENV_VARS:
+    if not env(var):
+        raise ImproperlyConfigured(f"The {var} environment variable is required but not set.")
 
 # Custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
