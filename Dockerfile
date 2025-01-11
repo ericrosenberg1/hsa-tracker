@@ -1,65 +1,53 @@
 FROM python:3.10-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    GUNICORN_WORKERS=3 \
+    GUNICORN_TIMEOUT=120
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     netcat-openbsd \
     curl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    bash \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt . 
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy application code
 COPY . .
 
-# Add a non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Create a non-root user
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup appuser && \
+    chown -R appuser:appgroup /app
+
 USER appuser
 
-# Expose application port
 EXPOSE 8000
 
-# Add health check
+# Healthcheck to ensure the service is up
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Simplified ENTRYPOINT for inline logic
-ENTRYPOINT ["/bin/bash", "-c", "\
-    set -euo pipefail && \
-    echo \"Checking database connectivity to ${DATABASE_HOST:-db}:${DATABASE_PORT:-5432}...\" && \
-    start_time=$(date +%s) && \
-    while true; do \
-        if nc -z \"${DATABASE_HOST:-db}\" \"${DATABASE_PORT:-5432}\"; then \
-            echo \"Database is up and reachable!\"; \
-            break; \
-        else \
-            current_time=$(date +%s) && \
-            elapsed=$(( current_time - start_time )) && \
-            if [ \"$elapsed\" -ge \"${DB_WAIT_TIMEOUT:-30}\" ]; then \
-                echo \"ERROR: Timed out after ${DB_WAIT_TIMEOUT:-30} seconds waiting for the database.\" >&2; \
-                exit 1; \
-            fi; \
-            echo \"Database is unavailable - sleeping for 1 second...\"; \
-            sleep 1; \
-        fi; \
-    done && \
-    echo \"Running database migrations...\" && \
+# Define the CMD, including database readiness, migrations, and static file collection
+CMD /bin/bash -c "\
+    echo 'Waiting for database...' && \
+    until nc -z ${DATABASE_HOST} ${DATABASE_PORT}; do sleep 1; done && \
+    echo 'Database is up' && \
     python manage.py migrate --noinput && \
-    echo \"Collecting static files...\" && \
     python manage.py collectstatic --noinput && \
-    echo \"Starting the application...\" && \
-    exec \"$@\" \
-"]
-
-# Default command
-CMD ["gunicorn", "hsatracker.wsgi:application", "--bind", "0.0.0.0:8000"]
+    gunicorn hsatracker.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers ${GUNICORN_WORKERS} \
+    --timeout ${GUNICORN_TIMEOUT} \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level debug"
