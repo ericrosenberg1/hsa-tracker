@@ -31,11 +31,11 @@ RUN addgroup --system appgroup && \
 
 USER appuser
 
-EXPOSE 8000
+EXPOSE 4111
 
 # Healthcheck to ensure the service is up
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:4111/health || exit 1
 
 # Define the CMD, including database readiness, migrations, and static file collection
 CMD /bin/bash -c "\
@@ -45,7 +45,7 @@ CMD /bin/bash -c "\
     python manage.py migrate --noinput && \
     python manage.py collectstatic --noinput && \
     gunicorn hsatracker.wsgi:application \
-    --bind 0.0.0.0:8000 \
+    --bind 0.0.0.0:4111 \
     --workers ${GUNICORN_WORKERS} \
     --timeout ${GUNICORN_TIMEOUT} \
     --access-logfile - \
