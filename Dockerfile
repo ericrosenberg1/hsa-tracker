@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     curl \
     bash \
+    ssmtp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -32,10 +33,6 @@ RUN addgroup --system appgroup && \
 USER appuser
 
 EXPOSE 4111
-
-# Healthcheck to ensure the service is up
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:4111/health || exit 1
 
 # Define the CMD, including database readiness, migrations, and static file collection
 CMD /bin/bash -c "\

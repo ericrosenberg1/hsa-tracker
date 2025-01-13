@@ -49,12 +49,11 @@ def login_view(request):
             
     return render(request, 'users/login.html', {'form': form})
 
-
 def logout_view(request):
     """User logout view."""
     logout(request)
     messages.success(request, 'Logged out successfully!')
-    return redirect('home')
+    return redirect('/')
 
 @login_required
 def profile(request):

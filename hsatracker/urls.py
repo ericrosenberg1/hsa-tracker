@@ -10,7 +10,7 @@ urlpatterns = [
 
     # Homepage and Dashboard
     path('', expense_views.dashboard, name='dashboard'),
-    path('', user_views.home, name='home'),
+    path('home/', user_views.home, name='home'),
 
     # Expense-related routes
     path('expenses/', expense_views.expense_list, name='expense_list'),
@@ -30,19 +30,56 @@ urlpatterns = [
     path('signup/', user_views.signup, name='signup'),
     path('profile/', user_views.profile, name='profile'),
 
-    # Password management routes
-    path(
-        'password_change/',
+    # Password change routes
+    path('password_change/',
         auth_views.PasswordChangeView.as_view(
-            template_name='users/password_change_form.html'
+            template_name='users/password_change_form.html',
+            success_url='/password_change/done/',
+            extra_context={'title': 'Change Password'}
         ),
         name='password_change'
     ),
-    path(
-        'password_change/done/',
+    path('password_change/done/',
         auth_views.PasswordChangeDoneView.as_view(
-            template_name='users/password_change_done.html'
+            template_name='users/password_change_done.html',
+            extra_context={'title': 'Password Changed'}
         ),
         name='password_change_done'
+    ),
+
+    # Password reset routes
+    path('password_reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='users/password_reset.html',
+            email_template_name='users/email/password_reset_email.html',
+            html_email_template_name='users/email/password_reset_email.html',
+            subject_template_name='users/email/password_reset_subject.txt',
+            success_url='/password_reset/done/',
+            extra_context={'title': 'Reset Password'},
+            from_email='noreply@hsatracker.com'
+        ),
+        name='password_reset'
+    ),
+    path('password_reset/done/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='users/password_reset_done.html',
+            extra_context={'title': 'Reset Password Sent'}
+        ),
+        name='password_reset_done'
+    ),
+    path('reset/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='users/password_reset_confirm.html',
+            success_url='/reset/done/',
+            extra_context={'title': 'Set New Password'}
+        ),
+        name='password_reset_confirm'
+    ),
+    path('reset/done/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='users/password_reset_complete.html',
+            extra_context={'title': 'Password Reset Complete'}
+        ),
+        name='password_reset_complete'
     ),
 ]
